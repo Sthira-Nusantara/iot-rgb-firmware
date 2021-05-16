@@ -26,8 +26,8 @@ const char *mqtt_username = "sthirasystemiot";
 const char *mqtt_password = "Ud3^fn*mpWWKaLw8oRUBG5FY&NQ2A@cK^iVW*7FZCRqCgnKYEQ6wBHh5K%J9uwCBW%KGBrg$Kv5Bgx$yCBGR3UuhSZq%89XFHf@6^cJjRamB7FntyAG#78%wdYhN!YYX";
 // const char *ssid = "IOT_STHIRA";
 // const char *password = "IotSthiraNusantara@2712";
-const char *ssid = "ISMANTARA_NET";
-const char *password = "8243325017116";
+const char *ssid = "IOT_STHIRA";
+const char *password = "IotSthiraNusantara@2712";
 
 String MacAdd = String(WiFi.macAddress());
 
@@ -42,6 +42,7 @@ String trigger = prefix + "/trigger";
 String setvalue = prefix + "/setvalue";
 String lastmode = prefix + "/lastmode";
 String correctionmode = prefix + "/correct";
+String update = prefix + "/update";
 
 const long utcOffsetInSeconds = 25200;
 
