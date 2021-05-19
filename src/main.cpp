@@ -15,7 +15,7 @@
 
 CRGB leds[NUM_LEDS];
 
-const String FirmwareVer = {"4.1"};
+const String FirmwareVer = {"4.2"};
 #define URL_fw_Version "https://raw.githubusercontent.com/Sthira-Nusantara/iot-rgb-firmware/master/version.txt"
 #define URL_fw_Bin "https://raw.githubusercontent.com/Sthira-Nusantara/iot-rgb-firmware/master/firmware.bin"
 
@@ -260,6 +260,7 @@ void callback(char *topic, byte *payload, unsigned int length)
 
     if (strcmp(device, "rgb") == 0)
     {
+      const uint8_t pinChoose = doc["pin"][0];
       int valueTrigger = doc["value"][0];
       if (valueTrigger > 5)
       {
@@ -275,11 +276,18 @@ void callback(char *topic, byte *payload, unsigned int length)
       }
       changeColor(colors[valueTrigger - 1]);
       lastCodeColor = valueTrigger;
+
+      char JSON[40];
+
+      sprintf(JSON, "{\"pin\":[\"%d\"],\"value\": [\"%d\"]}", pinChoose, valueTrigger);
+      client.publish(setvalue.c_str(), JSON);
     }
 
     if (strcmp(device, "brightness") == 0)
     {
       Serial.println("Set Brightness");
+
+      const uint8_t pinChoose = doc["pin"][0];
       uint8_t valueTrigger = doc["value"][0];
       if (valueTrigger > 255)
       {
@@ -295,6 +303,11 @@ void callback(char *topic, byte *payload, unsigned int length)
       }
       changeBrightness(valueTrigger);
       lastBrightness = valueTrigger;
+
+      char JSON[40];
+
+      sprintf(JSON, "{\"pin\":[\"%d\"],\"value\": [\"%d\"]}", pinChoose, valueTrigger);
+      client.publish(setvalue.c_str(), JSON);
     }
   }
 
