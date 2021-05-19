@@ -15,9 +15,9 @@
 
 CRGB leds[NUM_LEDS];
 
-const String FirmwareVer = {"4.0"};
+const String FirmwareVer = {"4.1"};
 #define URL_fw_Version "https://raw.githubusercontent.com/Sthira-Nusantara/iot-rgb-firmware/master/version.txt"
-#define URL_fw_Bin "https://raw.githubusercontent.com/Sthira-Nusantara/iot-rgb-firmware/master/rgb_d1r1.bin"
+#define URL_fw_Bin "https://raw.githubusercontent.com/Sthira-Nusantara/iot-rgb-firmware/master/firmware.bin"
 
 String URL_register = "https://api.rupira.com/v1/iot/request";
 
