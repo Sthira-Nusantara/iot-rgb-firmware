@@ -10,14 +10,14 @@
 #include <WiFiUdp.h>
 #include <NTPClient.h>
 
-#define NUM_LEDS 512
+#define NUM_LEDS 2200
 #define DATA_PIN 0
 
 CRGB leds[NUM_LEDS];
 
 const String FirmwareVer = {"4.2"};
 #define URL_fw_Version "https://raw.githubusercontent.com/Sthira-Nusantara/iot-rgb-firmware/master/version.txt"
-#define URL_fw_Bin "https://raw.githubusercontent.com/Sthira-Nusantara/iot-rgb-firmware/master/firmware.bin"
+#define URL_fw_Bin "https://raw.githubusercontent.com/Sthira-Nusantara/iot-rgb-firmware/master/firmware_v2.bin"
 
 String URL_register = "https://api.rupira.com/v1/iot/request";
 
