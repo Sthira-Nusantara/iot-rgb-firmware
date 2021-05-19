@@ -43,6 +43,13 @@ String setvalue = prefix + "/setvalue";
 String lastmode = prefix + "/lastmode";
 String correctionmode = prefix + "/correct";
 String update = prefix + "/update";
+String restart = prefix + "/restart";
+String testSubs = prefix + "/test";
+String checkConnection = prefix + "/check";
+String yesConnect = prefix + "/yesConnect";
+
+int lastCodeColor = 1;
+uint8_t lastBrightness = 255;
 
 const long utcOffsetInSeconds = 25200;
 
@@ -63,6 +70,127 @@ void changeColor(CRGB color)
     leds[i] = color;
   }
   FastLED.show();
+}
+
+void changeBrightness(uint8_t value)
+{
+
+  // Val = 255 , Last = 128;
+  if (value > lastBrightness)
+  {
+    for (uint8_t i = lastBrightness; i < value; i++)
+    {
+      FastLED.setBrightness(i);
+      FastLED.show();
+      delay(2);
+    }
+  }
+
+  // Val = 125, Last = 255
+  if (value < lastBrightness)
+  {
+    for (uint8_t i = lastBrightness; i > value; i--)
+    {
+      FastLED.setBrightness(i);
+      FastLED.show();
+      delay(2);
+    }
+  }
+}
+
+void blinkingColor(CRGB color, int times, int ms)
+{
+  for (int i = 0; i <= times; i++)
+  {
+    changeColor(color);
+    delay(ms);
+    changeColor(CRGB::Black);
+    delay(ms);
+  }
+
+  changeColor(color);
+}
+
+void FirmwareUpdate()
+{
+  Serial.println("Preparing update firmware");
+
+  if ((WiFi.status() == WL_CONNECTED))
+  {
+
+    deviceClient.setInsecure();
+
+    //    deviceClient.addHeader("Authorization", "Bearer affd6c0995d4b701ce6e67b2531eb368177f3e7f");
+
+    HTTPClient https;
+
+    Serial.print("[HTTPS] begin...\n");
+    if (https.begin(deviceClient, URL_fw_Version))
+    { // HTTPS
+      //      https.addHeader("Authorization", "Bearer affd6c0995d4b701ce6e67b2531eb368177f3e7f");
+
+      Serial.print("[HTTPS] GET...\n");
+      // start connection and send HTTP header
+      int httpCode = https.GET();
+
+      // httpCode will be negative on error
+      if (httpCode > 0)
+      {
+        // HTTP header has been send and Server response header has been handled
+        Serial.printf("[HTTPS] GET... code: %d\n", httpCode);
+
+        // file found at server
+        if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY)
+        {
+          String payload = https.getString();
+          payload.trim();
+
+          Serial.print("Latest Version: ");
+          Serial.println(payload);
+
+          if (payload.equals(FirmwareVer))
+          {
+            Serial.println("Device already on latest firmware version");
+          }
+          else
+          {
+            Serial.println("New firmware detected");
+            ESPhttpUpdate.setLedPin(LED_BUILTIN, LOW);
+
+            Serial.println("Device ready to update");
+
+            t_httpUpdate_return ret = ESPhttpUpdate.update(deviceClient, URL_fw_Bin);
+
+            switch (ret)
+            {
+            case HTTP_UPDATE_FAILED:
+              Serial.printf("HTTP_UPDATE_FAILD Error (%d): %s\n", ESPhttpUpdate.getLastError(), ESPhttpUpdate.getLastErrorString().c_str());
+              break;
+
+            case HTTP_UPDATE_NO_UPDATES:
+              Serial.println("HTTP_UPDATE_NO_UPDATES");
+              break;
+
+            case HTTP_UPDATE_OK:
+              Serial.println("Update Done well");
+              Serial.println("HTTP_UPDATE_OK");
+              break;
+            }
+          }
+        }
+      }
+      else
+      {
+        Serial.printf("[HTTPS] GET... failed, error: %s\n", https.errorToString(httpCode).c_str());
+      }
+
+      https.end();
+    }
+    else
+    {
+      Serial.printf("[HTTPS] Unable to connect\n");
+    }
+  }
 }
 
 void registerDevice()
@@ -113,7 +241,7 @@ void callback(char *topic, byte *payload, unsigned int length)
   Serial.print(topic);
   Serial.print("] ");
 
-  for (int i = 0; i < length; i++)
+  for (unsigned int i = 0; i < length; i++)
   {
     Serial.print((char)payload[i]);
   }
@@ -146,7 +274,95 @@ void callback(char *topic, byte *payload, unsigned int length)
         valueTrigger = doc["value"][0];
       }
       changeColor(colors[valueTrigger - 1]);
+      lastCodeColor = valueTrigger;
     }
+
+    if (strcmp(device, "brightness") == 0)
+    {
+      Serial.println("Set Brightness");
+      uint8_t valueTrigger = doc["value"][0];
+      if (valueTrigger > 255)
+      {
+        valueTrigger = 255;
+      }
+      else if (valueTrigger < 0)
+      {
+        valueTrigger = 0;
+      }
+      else
+      {
+        valueTrigger = doc["value"][0];
+      }
+      changeBrightness(valueTrigger);
+      lastBrightness = valueTrigger;
+    }
+  }
+
+  if (strcmp(topic, correctionmode.c_str()) == 0)
+  {
+    Serial.print("Device : ");
+    const char *device = doc["device"];
+    Serial.print(device);
+    Serial.print("");
+
+    if (strcmp(device, "rgb") == 0)
+    {
+      int valueTrigger = doc["value"][0];
+      if (valueTrigger > 5)
+      {
+        valueTrigger = 5;
+      }
+      else if (valueTrigger < 1)
+      {
+        valueTrigger = 1;
+      }
+      else
+      {
+        valueTrigger = doc["value"][0];
+      }
+      changeColor(colors[valueTrigger - 1]);
+      lastCodeColor = valueTrigger;
+    }
+
+    if (strcmp(device, "brightness") == 0)
+    {
+      uint8_t valueTrigger = doc["value"][0];
+      if (valueTrigger > 255)
+      {
+        valueTrigger = 255;
+      }
+      else if (valueTrigger < 0)
+      {
+        valueTrigger = 0;
+      }
+      else
+      {
+        valueTrigger = doc["value"][0];
+      }
+      changeBrightness(valueTrigger);
+      lastBrightness = valueTrigger;
+    }
+  }
+
+  if (strcmp(topic, testSubs.c_str()) == 0)
+  {
+    blinkingColor(colors[lastCodeColor - 1], 3, 500);
+  }
+
+  if (strcmp(topic, update.c_str()) == 0)
+  {
+    Serial.println("Checking firmware update");
+    FirmwareUpdate();
+  }
+
+  if (strcmp(topic, restart.c_str()) == 0)
+  {
+    ESP.restart();
+  }
+
+  if (strcmp(topic, checkConnection.c_str()) == 0)
+  {
+    client.publish(yesConnect.c_str(), "1");
   }
 
   Serial.println();
@@ -286,6 +502,10 @@ boolean reconnect()
       client.subscribe(pinmode.c_str());
       client.subscribe(trigger.c_str());
       client.subscribe(correctionmode.c_str());
+      client.subscribe(testSubs.c_str());
+      client.subscribe(update.c_str());
+      client.subscribe(restart.c_str());
+      client.subscribe(checkConnection.c_str());
     }
     else
     {
@@ -298,88 +518,6 @@ boolean reconnect()
   }
 
   return client.connected();
-}
-
-void FirmwareUpdate()
-{
-  Serial.println("Preparing update firmware");
-
-  if ((WiFi.status() == WL_CONNECTED))
-  {
-
-    deviceClient.setInsecure();
-
-    //    deviceClient.addHeader("Authorization", "Bearer affd6c0995d4b701ce6e67b2531eb368177f3e7f");
-
-    HTTPClient https;
-
-    Serial.print("[HTTPS] begin...\n");
-    if (https.begin(deviceClient, URL_fw_Version))
-    { // HTTPS
-      //      https.addHeader("Authorization", "Bearer affd6c0995d4b701ce6e67b2531eb368177f3e7f");
-
-      Serial.print("[HTTPS] GET...\n");
-      // start connection and send HTTP header
-      int httpCode = https.GET();
-
-      // httpCode will be negative on error
-      if (httpCode > 0)
-      {
-        // HTTP header has been send and Server response header has been handled
-        Serial.printf("[HTTPS] GET... code: %d\n", httpCode);
-
-        // file found at server
-        if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY)
-        {
-          String payload = https.getString();
-          payload.trim();
-
-          Serial.print("Latest Version: ");
-          Serial.println(payload);
-
-          if (payload.equals(FirmwareVer))
-          {
-            Serial.println("Device already on latest firmware version");
-          }
-          else
-          {
-            Serial.println("New firmware detected");
-            ESPhttpUpdate.setLedPin(LED_BUILTIN, LOW);
-
-            Serial.println("Device ready to update");
-
-            t_httpUpdate_return ret = ESPhttpUpdate.update(deviceClient, URL_fw_Bin);
-
-            switch (ret)
-            {
-            case HTTP_UPDATE_FAILED:
-              Serial.printf("HTTP_UPDATE_FAILD Error (%d): %s\n", ESPhttpUpdate.getLastError(), ESPhttpUpdate.getLastErrorString().c_str());
-              break;
-
-            case HTTP_UPDATE_NO_UPDATES:
-              Serial.println("HTTP_UPDATE_NO_UPDATES");
-              break;
-
-            case HTTP_UPDATE_OK:
-              Serial.println("Update Done well");
-              Serial.println("HTTP_UPDATE_OK");
-              break;
-            }
-          }
-        }
-      }
-      else
-      {
-        Serial.printf("[HTTPS] GET... failed, error: %s\n", https.errorToString(httpCode).c_str());
-      }
-
-      https.end();
-    }
-    else
-    {
-      Serial.printf("[HTTPS] Unable to connect\n");
-    }
-  }
 }
 
 void setup()
@@ -406,6 +544,7 @@ void setup()
   WiFi.setSleepMode(WIFI_NONE_SLEEP);
 
   FastLED.addLeds<WS2812B, DATA_PIN, GRB>(leds, NUM_LEDS); // GRB ordering is typical
+    // FastLED.addLeds<NEOPIXEL, DATA_PIN>(leds, NUM_LEDS);
   delay(500);
   changeColor(colors[0]);
   delay(500);
@@ -417,6 +556,11 @@ void setup()
   delay(500);
   changeColor(colors[4]);
 
+  delay(500);
+
+  changeColor(colors[3]);
+  FastLED.setBrightness(255);
+  FastLED.show();
   delay(500);
   Serial.println("Setup done");
 
@@ -437,8 +581,6 @@ void loop()
 
   if (WiFi.status() != WL_CONNECTED)
   {
-    changeColor(CRGB::Red);
-
     setup_wifi();
   }
 
