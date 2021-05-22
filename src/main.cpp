@@ -8,14 +8,14 @@
 #include <ESP8266HTTPClient.h>
 #include <ArduinoJson.h>
 #include <WiFiUdp.h>
-#include <NTPClient.h>
+// #include <NTPClient.h>
 
 #define NUM_LEDS 512
 #define DATA_PIN 0
 
 CRGB leds[NUM_LEDS];
 
-const String FirmwareVer = {"4.3"};
+const String FirmwareVer = {"4.4"};
 #define URL_fw_Version "https://raw.githubusercontent.com/Sthira-Nusantara/iot-rgb-firmware/master/version.txt"
 #define URL_fw_Bin "https://raw.githubusercontent.com/Sthira-Nusantara/iot-rgb-firmware/master/firmware.bin"
 
@@ -51,16 +51,16 @@ String yesConnect = prefix + "/yesConnect";
 int lastCodeColor = 1;
 uint8_t lastBrightness = 255;
 
-const long utcOffsetInSeconds = 25200;
+// const long utcOffsetInSeconds = 25200;
 
-char daysOfTheWeek[7][12] = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
+// char daysOfTheWeek[7][12] = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
 
-CRGB::HTMLColorCode colors[5] = {CRGB::Red, CRGB::Yellow, CRGB::Green, CRGB::Blue, CRGB::Magenta};
+CRGB::HTMLColorCode colors[7] = {CRGB::Red, CRGB::Yellow, CRGB::Green, CRGB::Blue, CRGB::Magenta, CRGB::White, CRGB::Black};
 
 WiFiClientSecure deviceClient;
 WiFiClient espClient;
-WiFiUDP ntpUDP;
-NTPClient timeClient(ntpUDP, "pool.ntp.org", utcOffsetInSeconds);
+// WiFiUDP ntpUDP;
+// NTPClient timeClient(ntpUDP, "pool.ntp.org", utcOffsetInSeconds);
 PubSubClient client(espClient);
 
 void changeColor(CRGB color)
@@ -262,9 +262,9 @@ void callback(char *topic, byte *payload, unsigned int length)
     {
       const uint8_t pinChoose = doc["pin"][0];
       int valueTrigger = doc["value"][0];
-      if (valueTrigger > 5)
+      if (valueTrigger > 7)
       {
-        valueTrigger = 5;
+        valueTrigger = 7;
       }
       else if (valueTrigger < 1)
       {
@@ -321,9 +321,9 @@ void callback(char *topic, byte *payload, unsigned int length)
     if (strcmp(device, "rgb") == 0)
     {
       int valueTrigger = doc["value"][0];
-      if (valueTrigger > 5)
+      if (valueTrigger > 7)
       {
-        valueTrigger = 5;
+        valueTrigger = 7;
       }
       else if (valueTrigger < 1)
       {
@@ -557,7 +557,7 @@ void setup()
   WiFi.setSleepMode(WIFI_NONE_SLEEP);
 
   FastLED.addLeds<WS2812B, DATA_PIN, GRB>(leds, NUM_LEDS); // GRB ordering is typical
-    // FastLED.addLeds<NEOPIXEL, DATA_PIN>(leds, NUM_LEDS);
+                                                           // FastLED.addLeds<NEOPIXEL, DATA_PIN>(leds, NUM_LEDS);
   delay(500);
   changeColor(colors[0]);
   delay(500);
@@ -597,47 +597,47 @@ void loop()
     setup_wifi();
   }
 
-  timeClient.update();
+  // timeClient.update();
 
-  int thisHour = timeClient.getHours();
-  int thisMinute = timeClient.getMinutes();
-  int thisSecond = timeClient.getSeconds();
+  // int thisHour = timeClient.getHours();
+  // int thisMinute = timeClient.getMinutes();
+  // int thisSecond = timeClient.getSeconds();
 
-  if (thisHour == 0 && thisMinute == 1 && thisSecond == 0)
-  {
-    Serial.println("Checking firmware update");
-    FirmwareUpdate();
-  }
+  // if (thisHour == 0 && thisMinute == 1 && thisSecond == 0)
+  // {
+  //   Serial.println("Checking firmware update");
+  //   FirmwareUpdate();
+  // }
 
-  if (thisHour == 1 && thisMinute == 1 && thisSecond == 0)
-  {
-    Serial.println("Checking firmware update");
-    FirmwareUpdate();
-  }
+  // if (thisHour == 1 && thisMinute == 1 && thisSecond == 0)
+  // {
+  //   Serial.println("Checking firmware update");
+  //   FirmwareUpdate();
+  // }
 
-  if (thisHour == 2 && thisMinute == 1 && thisSecond == 0)
-  {
-    Serial.println("Checking firmware update");
-    FirmwareUpdate();
-  }
+  // if (thisHour == 2 && thisMinute == 1 && thisSecond == 0)
+  // {
+  //   Serial.println("Checking firmware update");
+  //   FirmwareUpdate();
+  // }
 
-  if (thisHour == 19 && thisMinute == 1 && thisSecond == 0)
-  {
-    Serial.println("Checking firmware update");
-    FirmwareUpdate();
-  }
+  // if (thisHour == 19 && thisMinute == 1 && thisSecond == 0)
+  // {
+  //   Serial.println("Checking firmware update");
+  //   FirmwareUpdate();
+  // }
 
-  if (thisHour == 20 && thisMinute == 1 && thisSecond == 0)
-  {
-    Serial.println("Checking firmware update");
-    FirmwareUpdate();
-  }
+  // if (thisHour == 20 && thisMinute == 1 && thisSecond == 0)
+  // {
+  //   Serial.println("Checking firmware update");
+  //   FirmwareUpdate();
+  // }
 
-  if (thisHour == 21 && thisMinute == 1 && thisSecond == 0)
-  {
-    Serial.println("Checking firmware update");
-    FirmwareUpdate();
-  }
+  // if (thisHour == 21 && thisMinute == 1 && thisSecond == 0)
+  // {
+  //   Serial.println("Checking firmware update");
+  //   FirmwareUpdate();
+  // }
 
   if (!client.connected())
   {
